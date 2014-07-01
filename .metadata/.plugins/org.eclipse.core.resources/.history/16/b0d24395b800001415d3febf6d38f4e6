@@ -1,0 +1,15 @@
+grammar org.xtext.example.mydsl.MyDsl with org.eclipse.xtext.common.Terminals
+
+generate myDsl "http://www.xtext.org/example/mydsl/MyDsl"
+
+PascalProgram:
+	'Program' IDENTIFICADOR ';';
+
+terminal IDENTIFICADOR:
+	CARACTERE (CARACTERE | NUMERO | '_');
+
+terminal fragment CARACTERE:
+	['a'..'z' | 'A'..'Z'];
+
+terminal fragment NUMERO:
+	('0'..'9');
