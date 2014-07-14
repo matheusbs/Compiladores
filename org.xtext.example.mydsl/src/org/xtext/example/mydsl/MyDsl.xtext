@@ -2,14 +2,572 @@ grammar org.xtext.example.mydsl.MyDsl with org.eclipse.xtext.common.Terminals
 
 generate myDsl "http://www.xtext.org/example/mydsl/MyDsl"
 
-PascalProgram:
-	'Program' name=IDENTIFICADOR ';';
+/* Programs and Blocks */
+Program:
+    ProgramHeading Block PERIOD;
 
-terminal IDENTIFICADOR:
-	CARACTERE (CARACTERE | NUMERO | '_')*;
+ProgramHeading:
+    PROGRAMT name=IDENTIFIER LPAREN IdentifierList RPAREN SEMICOLON;
 
-terminal fragment CARACTERE:
-	('a'..'z' | 'A'..'Z');
+Block:
+    DeclarationPart StatementPart;
 
-terminal fragment NUMERO:
-	('0'..'9');
+DeclarationPart:
+    (LabelDeclarationPart)? (ConstantDefinitionPart)? (TypeDefinitionPart)? (VariableDeclarationPart)?
+    ProcedureAndFunctionDeclarationPart;
+
+LabelDeclarationPart:
+    LABELT LABEL (COMMA LABEL)* SEMICOLON;
+
+ConstantDefinitionPart:
+    CONSTT ConstantDefinition SEMICOLON (ConstantDefinition SEMICOLON)*;
+
+ConstantDefinition:
+    IDENTIFIER EQ CONSTANT;
+
+TypeDefinitionPart:
+    TYPET TypeDefinition SEMICOLON (TypeDefinition SEMICOLON)*;
+
+TypeDefinition:
+    IDENTIFIER EQ Type;
+
+VariableDeclarationPart:
+    VART VariableDeclaration SEMICOLON (VariableDeclaration SEMICOLON)*;
+
+VariableDeclaration:
+    IdentifierList COLON Type;
+
+ProcedureAndFunctionDeclarationPart:
+    ((ProcedureDeclaration | FunctionDeclaration) SEMICOLON)*;
+
+ProcedureDeclaration:
+    ProcedureHeading SEMICOLON ProcedureBody | ProcedureHeading SEMICOLON Directive | ProcedureIdentification SEMICOLON
+    ProcedureBody;
+
+ProcedureBody:
+    Block;
+
+FunctionDeclaration:
+    FunctionHeading SEMICOLON FunctionBody | FunctionHeading SEMICOLON Directive | FunctionIdentification SEMICOLON
+    FunctionBody;
+
+FunctionBody:
+    Block;
+
+Directive:
+    FORWARDT | COMPILERDEFINEDDIRECTIVES;
+
+StatementPart:
+    BEGINT StatementSequence ENDT;
+
+/* Procedure and Function Definitions */
+ProcedureHeading:
+    PROCEDURET IDENTIFIER (FormalParameterList)?;
+
+FunctionHeading:
+    FUNCTIONT IDENTIFIER (FormalParameterList)? COLON ResultType;
+
+ResultType:
+    TYPEIDENTIFIER;
+
+ProcedureIdentification:
+    PROCEDURET PROCEDUREIDENTIFIER;
+
+FunctionIdentification:
+    FUNCTIONT FUNCTIONIDENTIFIER;
+
+FormalParameterList:
+    LPAREN FormalParameterSection (SEMICOLON FormalParameterSection)* RPAREN;
+
+FormalParameterSection:
+    ValueParameterSection |
+    VariableParameterSection |
+    ProcedureParameterSection |
+    FunctionParameterSection;
+
+ValueParameterSection:
+    IdentifierList COLON ParameterType;
+
+VariableParameterSection:
+    VART IdentifierList COLON ParameterType;
+
+ProcedureParameterSection:
+    ProcedureHeading;
+
+FunctionParameterSection:
+    FunctionHeading;
+
+ParameterType:
+    TYPEIDENTIFIER | ConformantArraySchema;
+
+ConformantArraySchema:
+    PackedConformantArraySchema |
+    UnpackedConformantArraySchema;
+
+PackedConformantArraySchema:
+    PACKEDT ARRAYT LBRACKET BoundSpecification RBRACKET OFT TYPEIDENTIFIER;
+
+UnpackedConformantArraySchema:
+    ARRAYT LBRACKET BoundSpecification (SEMICOLON BoundSpecification)* RBRACKET
+    OFT (TYPEIDENTIFIER | ConformantArraySchema);
+
+BoundSpecification:
+    IDENTIFIER DOUBLEPERIOD IDENTIFIER COLON OrdinalTypeIdentifier;
+
+OrdinalTypeIdentifier:
+    TYPEIDENTIFIER;
+
+/* Statements */
+StatementSequence:
+    Statement (SEMICOLON Statement)*;
+
+Statement:
+    (LABEL COLON)? (SimpleStatement | StructuredStatement);
+
+SimpleStatement:
+    (AssigmentStatement | ProcedureStatement | GotoStatement)?;
+
+AssigmentStatement:
+    (Variable | FUNCTIONIDENTIFIER) COLONEQ Expression;
+
+ProcedureStatement:
+    PROCEDUREIDENTIFIER (ActualParameterList)?;
+
+GotoStatement:
+    GOTOT LABEL;
+
+StructuredStatement:
+    CompoundStatement | RepetitiveStatement | ConditionalStatement | WithStatement;
+
+CompoundStatement:
+    BEGINT StatementSequence ENDT;
+
+RepetitiveStatement:
+    WhileStatement | RepeatStatement | ForStatement;
+
+WhileStatement:
+    WHILET Expression DOT Statement;
+
+RepeatStatement:
+    REPEATT StatementSequence UNTILT Expression;
+
+ForStatement:
+    FORT VARIABLEIDENTIFIER COLONEQ InitialExpression (TOT | DOWNTOT) FinalExpression DOT Statement;
+
+InitialExpression:
+    Expression;
+
+FinalExpression:
+    Expression;
+
+ConditionalStatement:
+    IfStatement | CaseStatement;
+
+IfStatement:
+    IFT Expression THENT Statement (ELSET Statement)?;
+
+CaseStatement:
+    CASET Expression OFT CaseLimb (SEMICOLON CaseLimb)* (SEMICOLON)? ENDT;
+
+CaseLimb:
+    CaseLabelList COLON Statement;
+
+CaseLabelList:
+    CONSTANT (COMMA CONSTANT)*;
+
+WithStatement:
+    WITHT RecordVariable (COMMA RecordVariable)* DOT Statement;
+
+ActualParameterList:
+    LPAREN ActualParameter (COMMA ActualParameter)* RPAREN;
+
+ActualParameter:
+    ActualValue | ActualVariable | ActualProcedure | ActualFunction;
+
+ActualValue:
+    Expression;
+
+ActualProcedure:
+    PROCEDUREIDENTIFIER;
+
+ActualFunction:
+    FUNCTIONIDENTIFIER;
+
+/* Expressions */
+Expression:
+    SimpleExpression (RELATIONOPERATOR SimpleExpression)?;
+
+SimpleExpression:
+    (SIGN)? Term (ADDITIONOPERATOR Term)?;
+
+Term:
+    Factor (MULTIPLICATIONOPERATOR Factor)*;
+
+Factor:
+    Variable | NUMBER | STRING | Set | NILT | CONSTANTIDENTIFIER | BOUNDIDENTIFIER | FunctionDesignator | LPAREN
+    Expression RPAREN | NOTT Factor;
+
+Variable:
+    EntireVariable | ComponentVariable | ReferencedVariable;
+
+EntireVariable:
+    VARIABLEIDENTIFIER | FIELDIDENTIFIER;
+
+ComponentVariable:
+    IndexedVariable | FieldDesignator | FileBuffer;
+
+IndexedVariable:
+    ArrayVariable LBRACKET ExpressionList RBRACKET;
+
+FieldDesignator:
+    RecordVariable PERIOD FIELDIDENTIFIER;
+
+Set:
+    LBRACKET ElementList RBRACKET;
+
+ElementList:
+    (Expression (SEMICOLON Expression)*)?;
+
+FunctionDesignator:
+    FUNCTIONIDENTIFIER (ActualParameterList)?;
+
+FileBuffer:
+    FileVariable CARAT;
+
+/* Types */
+Type:
+    SimpleType | StructuredType | PointerType | TYPEIDENTIFIER;
+
+SimpleType:
+    SubRangeType | EnumType;
+
+EnumType:
+    LPAREN IdentifierList RPAREN;
+
+SubRangeType:
+    LowerBound DOUBLEPERIOD UpperBound;
+
+LowerBound:
+    CONSTANT;
+
+UpperBound:
+    CONSTANT;
+
+StructuredType:
+    (PACKEDT)? UnpackedStructuredType;
+
+UnpackedStructuredType:
+    ArrayType | RecordType | SetType | FileType;
+
+ArrayType:
+    ARRAYT LBRACKET IndexType (COMMA IndexType)* RBRACKET OFT ElementType;
+
+IndexType:
+    SimpleType;
+
+ElementType:
+    Type;
+
+    //falta criar fieldList
+RecordType:
+    RECORDT /*FieldList*/ ENDT;
+
+SetType:
+    SETOF BaseType;
+
+BaseType:
+    Type;
+
+FileType:
+    FILEOF FileComponentType;
+
+FileComponentType:
+    Type;
+
+PointerType:
+    CARAT TYPEIDENTIFIER;
+
+/* Record Fields */
+FieldList:
+    ((FixedPart (SEMICOLON VariantPart)? | VariantPart) (SEMICOLON)?)?;
+
+FixedPart:
+    RecordSection (SEMICOLON RecordSection)*;
+
+RecordSection:
+    IdentifierList COLON Type;
+
+VariantPart:
+    CASET TagField TYPEIDENTIFIER OFT Variant (SEMICOLON Variant)*;
+
+TagField:
+    (IDENTIFIER COLON)?;
+
+Variant:
+    CaseLabelList COLON LPAREN FieldList RPAREN;
+
+/*Input/Output*/
+OutputList:
+    OutputValue (COMMA OutputValue)*;
+
+OutputValue:
+    Expression (SEMICOLON FieldWidth (COLON FractionLength)?)?;
+
+FieldWidth:
+    Expression;
+
+FractionLength:
+    Expression;
+
+/* Variable and Identifier Categories */
+ExpressionList:
+    Expression (COMMA Expression)*;
+
+FileVariable:
+    Variable;
+
+ReferencedVariable:
+    PointerVariable CARAT;
+
+RecordVariable:
+    Variable;
+
+PointerVariable:
+    Variable;
+
+ActualVariable:
+    Variable;
+
+ArrayVariable:
+    Variable;
+
+/* Low Level Definitions */
+VariableList:
+    Variable (COMMA Variable)*;
+
+IdentifierList:
+    IDENTIFIER (COMMA IDENTIFIER)*;
+
+/* Terminais */
+terminal TYPEIDENTIFIER:
+    IDENTIFIER;
+
+terminal FUNCTIONIDENTIFIER:
+    IDENTIFIER;
+
+terminal PROCEDUREIDENTIFIER:
+    IDENTIFIER;
+
+terminal FIELDIDENTIFIER:
+    IDENTIFIER;
+
+terminal VARIABLEIDENTIFIER:
+    IDENTIFIER;
+
+terminal BOUNDIDENTIFIER:
+    IDENTIFIER;
+
+terminal CONSTANTIDENTIFIER:
+    IDENTIFIER;
+
+terminal PROGRAMT:
+    'program';
+
+terminal LABELT:
+    'label';
+
+terminal CONSTT:
+    'const';
+
+terminal TYPET:
+    'type';
+
+terminal FUNCTIONT:
+    'function';
+
+terminal VART:
+    'var';
+
+terminal PACKEDT:
+    'packed';
+
+terminal ARRAYT:
+    'array';
+
+terminal OFT:
+    'of';
+
+terminal NOTT:
+    'not';
+
+terminal PROCEDURET:
+    'procedure';
+
+terminal RECORDT:
+    'record';
+
+terminal ENDT:
+    'end';
+
+terminal SETOF:
+    'set of';
+
+terminal FILEOF:
+    'file of';
+
+terminal BEGINT:
+    'begin';
+
+terminal FORWARDT:
+    'forward';
+
+terminal GOTOT:
+    'goto';
+
+terminal ORT:
+    'or';
+
+terminal ANDT:
+    'and';
+
+terminal NILT:
+    'nil';
+
+terminal DIVT:
+    'div';
+
+terminal MODT:
+    'mod';
+
+terminal WHILET:
+    'while';
+
+terminal IFT:
+    'if';
+
+terminal ELSET:
+    'else';
+
+terminal DOT:
+    'do';
+
+terminal REPEATT:
+    'repeat';
+
+terminal UNTILT:
+    'until';
+
+terminal TOT:
+    'to';
+
+terminal DOWNTOT:
+    'downto';
+
+terminal FORT:
+    'for';
+
+terminal THENT:
+    'then';
+
+terminal CASET:
+    'case';
+
+terminal WITHT:
+    'with';
+
+terminal CARAT:
+    '^';
+
+terminal DOUBLEPERIOD:
+    '..';
+
+terminal PERIOD:
+    '.';
+
+terminal COLONEQ:
+    ':=';
+
+terminal EQ:
+    '=';
+
+terminal COLON:
+    ':';
+
+terminal UNDERLINE:
+    '_';
+
+terminal RPAREN:
+    ')';
+
+terminal LPAREN:
+    '(';
+
+terminal LBRACKET:
+    '[';
+
+terminal RBRACKET:
+    ']';
+
+terminal COMMA:
+    ',';
+
+terminal SEMICOLON:
+    ';';
+
+/* Levamos em consideração apenas as definicoes usadas quando se compila usando FPC */
+terminal COMPILERDEFINEDDIRECTIVES:
+    'FPC_LINK_DYNAMIC' | 'FPC_LINK_STATIC' | 'FPC_LINK_SMART' | 'FPC_PROFILE' | 'FPC_CROSSCOMPILING' | 'FPC' | 'VER2' |
+    'VER2_0' | 'VER2_2' | 'FPC_VERSION' | 'FPC_RELEASE' | 'FPC_PATCH' | 'FPC_FULLVERSION' | 'ENDIAN_LITTLE' |
+    'ENDIAN_BIG' | 'FPC_DELPHI' | 'FPC_OBJFPC' | 'FPC_TP' | 'FPC_GPC';
+
+terminal IDENTIFIER:
+    LETTER (LETTER | DIGITO)*;
+
+terminal RELATIONOPERATOR:
+    "=" | "<>" | "<" | "<=" | ">" | ">=" | "in";
+
+terminal ADDITIONOPERATOR:
+    "+" | "-" | ORT;
+
+terminal MULTIPLICATIONOPERATOR:
+    "*" | "/" | DIVT | MODT | ANDT;
+
+terminal NUMBER:
+    INTEGERNUMBER | REALNUMBER;
+
+terminal INTEGERNUMBER:
+    DIGITSEQUENCE;
+
+terminal REALNUMBER:
+    DIGITSEQUENCE "." (UNSIGNEDDIGITSEQUENCE)? (SCALEFACTOR)? |
+    DIGITSEQUENCE SCALEFACTOR;
+
+terminal SCALEFACTOR:
+    ('E' | 'e') DIGITSEQUENCE;
+
+terminal UNSIGNEDDIGITSEQUENCE:
+    DIGITO (DIGITO)*;
+
+terminal DIGITSEQUENCE:
+    (SIGN)? UNSIGNEDDIGITSEQUENCE;
+
+terminal SIGN:
+    '+' | '-';
+
+terminal LETTER:
+    ('a'..'z') | ('A'..'Z');
+
+terminal DIGITO:
+    ('0'..'9');
+
+terminal STRING:
+    "'" STRINGCHARACTER (STRINGCHARACTER)* "'";
+
+terminal STRINGCHARACTER:
+    NUMBER | (LETTER)* | "''";
+
+terminal LABEL:
+    INTEGERNUMBER;
+
+terminal CONSTANT:
+    (SIGN)? (CONSTANTIDENTIFIER | NUMBER) | STRING;
