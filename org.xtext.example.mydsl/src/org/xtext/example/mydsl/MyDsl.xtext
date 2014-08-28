@@ -1,573 +1,435 @@
-grammar org.xtext.example.mydsl.MyDsl with org.eclipse.xtext.common.Terminals
+/* Disciplina: Compiladores 2014.1 */
+/* Professor: Franklin Ramalho */
+/* Equipe: Matheus Batista e Jefferson Trigueiro */
+grammar org.xtext.example.mydsl.MyDsql with org.eclipse.xtext.common.Terminals
 
-generate myDsl "http://www.xtext.org/example/mydsl/MyDsl"
+generate myDsql "http://www.xtext.org/example/mydsl/MyDsql"
 
-/* Programs and Blocks */
 Program:
-    ProgramHeading Block PERIOD;
+	ProgramHeading Block PERIOD;
 
 ProgramHeading:
-    PROGRAMT name=IDENTIFIER LPAREN IdentifierList RPAREN SEMICOLON;
+	PROGRAMT name=IDENTIFIER LPAREN IdentifierList RPAREN SEMICOLON;
 
 Block:
-    DeclarationPart StatementPart;
+	DeclarationPart StatementPart;
 
 DeclarationPart:
-    (LabelDeclarationPart)? (ConstantDefinitionPart)? (TypeDefinitionPart)? (VariableDeclarationPart)?
-    ProcedureAndFunctionDeclarationPart;
+	(LabelDeclarationPart)? (ConstantDefinitionPart)? (TypeDefinitionPart)? (VariableDeclarationPart)?
+	ProcedureAndFunctionDeclarationPart;
 
 LabelDeclarationPart:
-    LABELT LABEL (COMMA LABEL)* SEMICOLON;
+	LABELT Label (COMMA Label)* SEMICOLON;
 
 ConstantDefinitionPart:
-    CONSTT ConstantDefinition SEMICOLON (ConstantDefinition SEMICOLON)*;
+	CONSTT ConstantDefinition SEMICOLON (ConstantDefinition SEMICOLON)*;
 
 ConstantDefinition:
-    IDENTIFIER EQ CONSTANT;
+	IDENTIFIER EQT Constant;
 
 TypeDefinitionPart:
-    TYPET TypeDefinition SEMICOLON (TypeDefinition SEMICOLON)*;
+	TYPET TypeDefinition SEMICOLON (TypeDefinition SEMICOLON)*;
 
 TypeDefinition:
-    IDENTIFIER EQ Type;
+	IDENTIFIER EQT Type;
 
 VariableDeclarationPart:
-    VART VariableDeclaration SEMICOLON (VariableDeclaration SEMICOLON)*;
+	VART VariableDeclaration SEMICOLON (VariableDeclaration SEMICOLON)*;
 
 VariableDeclaration:
-    IdentifierList COLON Type;
+	IdentifierList COLON Type;
 
 ProcedureAndFunctionDeclarationPart:
-    ((ProcedureDeclaration | FunctionDeclaration) SEMICOLON)*;
+	((ProcedureDeclaration | FunctionDeclaration) SEMICOLON)*;
 
 ProcedureDeclaration:
-    ProcedureHeading SEMICOLON ProcedureBody | ProcedureHeading SEMICOLON Directive | ProcedureIdentification SEMICOLON
-    ProcedureBody;
+	ProcedureHeading SEMICOLON (ProcedureBody | Directive);
 
 ProcedureBody:
-    Block;
+	Block;
 
 FunctionDeclaration:
-    FunctionHeading SEMICOLON FunctionBody | FunctionHeading SEMICOLON Directive | FunctionIdentification SEMICOLON
-    FunctionBody;
+	FunctionHeading SEMICOLON (FunctionBody | Directive);
 
 FunctionBody:
-    Block;
+	Block;
 
 Directive:
-    FORWARDT | COMPILERDEFINEDDIRECTIVES;
+	FORWARDT;
 
 StatementPart:
-    BEGINT StatementSequence ENDT;
+	BEGINT StatementSequence ENDT;
 
-/* Procedure and Function Definitions */
 ProcedureHeading:
-    PROCEDURET IDENTIFIER (FormalParameterList)?;
+	PROCEDURET IDENTIFIER (FormalParameterList)?;
 
 FunctionHeading:
-    FUNCTIONT IDENTIFIER (FormalParameterList)? COLON ResultType;
-
-ResultType:
-    TYPEIDENTIFIER;
-
-ProcedureIdentification:
-    PROCEDURET PROCEDUREIDENTIFIER;
-
-FunctionIdentification:
-    FUNCTIONT FUNCTIONIDENTIFIER;
+	FUNCTIONT IDENTIFIER ((FormalParameterList)? COMMA IDENTIFIER)?;
 
 FormalParameterList:
-    LPAREN FormalParameterSection (SEMICOLON FormalParameterSection)* RPAREN;
+	LPAREN FormalParameterSection (SEMICOLON FormalParameterSection)* RPAREN;
 
 FormalParameterSection:
-    ValueParameterSection |
-    VariableParameterSection |
-    ProcedureParameterSection |
-    FunctionParameterSection;
+	ValueParameterSection | VariableParameterSection | ProcedureParameterSection | FunctionParameterSection;
 
 ValueParameterSection:
-    IdentifierList COLON ParameterType;
+	IdentifierList COLON ParameterType;
 
 VariableParameterSection:
-    VART IdentifierList COLON ParameterType;
+	VART IdentifierList COLON ParameterType;
 
 ProcedureParameterSection:
-    ProcedureHeading;
+	ProcedureHeading;
 
 FunctionParameterSection:
-    FunctionHeading;
+	FunctionHeading;
 
 ParameterType:
-    TYPEIDENTIFIER | ConformantArraySchema;
+	(IDENTIFIER | ConformantArraySchema);
 
 ConformantArraySchema:
-    PackedConformantArraySchema |
-    UnpackedConformantArraySchema;
+	(PackedConformantArraySchema | UnpackedConformantArraySchema);
 
 PackedConformantArraySchema:
-    PACKEDT ARRAYT LBRACKET BoundSpecification RBRACKET OFT TYPEIDENTIFIER;
+	PACKEDT ARRAYT "[ " BoundSpecification " ]" OFT IDENTIFIER;
 
 UnpackedConformantArraySchema:
-    ARRAYT LBRACKET BoundSpecification (SEMICOLON BoundSpecification)* RBRACKET
-    OFT (TYPEIDENTIFIER | ConformantArraySchema);
+	ARRAYT LBRACKET BoundSpecification (SEMICOLON BoundSpecification)* RBRACKET
+	OFT (IDENTIFIER | ConformantArraySchema);
 
 BoundSpecification:
-    IDENTIFIER DOUBLEPERIOD IDENTIFIER COLON OrdinalTypeIdentifier;
+	IDENTIFIER DOUBLEPERIOD IDENTIFIER COLON IDENTIFIER;
 
-OrdinalTypeIdentifier:
-    TYPEIDENTIFIER;
-
-/* Statements */
 StatementSequence:
-    Statement (SEMICOLON Statement)*;
+	Statement (SEMICOLON Statement)*;
 
 Statement:
-    (LABEL COLON)? (SimpleStatement | StructuredStatement);
+	(Label COLON)? (SimpleStatement | StructuredStatement);
 
 SimpleStatement:
-    (AssigmentStatement | ProcedureStatement | GotoStatement)?;
+	(AssignmentStatement | ProcedureStatement | GotoStatement)?;
 
-AssigmentStatement:
-    (Variable | FUNCTIONIDENTIFIER) COLONEQ Expression;
+AssignmentStatement:
+	Variable COLONEQ Expression;
 
 ProcedureStatement:
-    PROCEDUREIDENTIFIER (ActualParameterList)?;
+	IDENTIFIER (ActualParameterList)?;
 
 GotoStatement:
-    GOTOT LABEL;
+	GOTOT Label;
 
 StructuredStatement:
-    CompoundStatement | RepetitiveStatement | ConditionalStatement | WithStatement;
+	CompoundStatement | RepetitiveStatement | ConditionalStatement | WithStatement;
 
 CompoundStatement:
-    BEGINT StatementSequence ENDT;
+	BEGINT StatementSequence ENDT;
 
 RepetitiveStatement:
-    WhileStatement | RepeatStatement | ForStatement;
+	WhileStatement | RepeatStatement | ForStatement;
 
 WhileStatement:
-    WHILET Expression DOT Statement;
+	WHILET Expression DOT Statement;
 
 RepeatStatement:
-    REPEATT StatementSequence UNTILT Expression;
+	REPEATT StatementSequence UNTILT Expression;
 
 ForStatement:
-    FORT VARIABLEIDENTIFIER COLONEQ InitialExpression (TOT | DOWNTOT) FinalExpression DOT Statement;
+	FORT IDENTIFIER COLONEQ InitialExpression (TOT | DOWNTOT) DOT Statement;
 
 InitialExpression:
-    Expression;
+	Expression;
 
 FinalExpression:
-    Expression;
+	Expression;
 
 ConditionalStatement:
-    IfStatement | CaseStatement;
+	IfStatement | CaseStatement;
 
 IfStatement:
-    IFT Expression THENT Statement (ELSET Statement)?;
+	IFT THENT Statement (ELSET Statement)?;
 
 CaseStatement:
-    CASET Expression OFT CaseLimb (SEMICOLON CaseLimb)* (SEMICOLON)? ENDT;
+	CASET OFT CaseLimb (SEMICOLON)* (SEMICOLON)? ENDT;
 
 CaseLimb:
-    CaseLabelList COLON Statement;
+	CaseLabelList COLON Statement;
 
 CaseLabelList:
-    CONSTANT (COMMA CONSTANT)*;
+	Constant (COMMA Constant)*;
 
 WithStatement:
-    WITHT RecordVariable (COMMA RecordVariable)* DOT Statement;
+	WITHT (COMMA)* DOT Statement;
 
 ActualParameterList:
-    LPAREN ActualParameter (COMMA ActualParameter)* RPAREN;
+	LPAREN ActualParameter (COMMA ActualParameter)* RPAREN;
 
 ActualParameter:
-    ActualValue | ActualVariable | ActualProcedure | ActualFunction;
+	ActualValue IDENTIFIER;
 
 ActualValue:
-    Expression;
+	Expression;
 
-ActualProcedure:
-    PROCEDUREIDENTIFIER;
-
-ActualFunction:
-    FUNCTIONIDENTIFIER;
-
-/* Expressions */
 Expression:
-    SimpleExpression (RELATIONOPERATOR SimpleExpression)?;
+	SimpleExpression (RelationalOperator SimpleExpression)?;
 
 SimpleExpression:
-    (SIGN)? Term (ADDITIONOPERATOR Term)?;
+	(SIGN)? Term (AdditionOperator Term)*;
 
 Term:
-    Factor (MULTIPLICATIONOPERATOR Factor)*;
+	Factor (MultiplicatorOperator Factor)*;
+
+RelationalOperator:
+	EQT | '<>' | '<' | '<=' | '>' | '>=' | 'in';
+
+AdditionOperator:
+	SIGN | 'or';
+
+MultiplicatorOperator:
+	'*' | '/' | 'div' | 'mod' | 'and';
 
 Factor:
-    Variable | NUMBER | STRING | Set | NILT | CONSTANTIDENTIFIER | BOUNDIDENTIFIER | FunctionDesignator | LPAREN
-    Expression RPAREN | NOTT Factor;
-
-Variable:
-    EntireVariable | ComponentVariable | ReferencedVariable;
-
-EntireVariable:
-    VARIABLEIDENTIFIER | FIELDIDENTIFIER;
-
-ComponentVariable:
-    IndexedVariable | FieldDesignator | FileBuffer;
-
-IndexedVariable:
-    ArrayVariable LBRACKET ExpressionList RBRACKET;
-
-FieldDesignator:
-    RecordVariable PERIOD FIELDIDENTIFIER;
+	Number | STRING | Set | 'nil' | IDENTIFIER (ActualParameterList)? | LPAREN Expression RPAREN | 'not' Factor;
 
 Set:
-    LBRACKET ElementList RBRACKET;
+	LBRACKET ElementList RBRACKET;
+
+Variable:
+	IDENTIFIER;
 
 ElementList:
-    (Expression (SEMICOLON Expression)*)?;
+	(Expression (COMMA Expression)*)?;
 
-FunctionDesignator:
-    FUNCTIONIDENTIFIER (ActualParameterList)?;
-
-FileBuffer:
-    FileVariable CARAT;
-
-/* Types */
 Type:
-    SimpleType | StructuredType | PointerType | TYPEIDENTIFIER;
+	(SimpleType | StructuredType | PointerType | IDENTIFIER);
 
 SimpleType:
-    SubRangeType | EnumType;
+	(SubrangeType | EnumeratedType);
 
-EnumType:
-    LPAREN IdentifierList RPAREN;
+EnumeratedType:
+	LPAREN IdentifierList RPAREN;
 
-SubRangeType:
-    LowerBound DOUBLEPERIOD UpperBound;
-
-LowerBound:
-    CONSTANT;
-
-UpperBound:
-    CONSTANT;
+SubrangeType:
+	Constant DOUBLEPERIOD Constant;
 
 StructuredType:
-    (PACKEDT)? UnpackedStructuredType;
+	(PACKEDT)? UnpackedStructuredType;
 
 UnpackedStructuredType:
-    ArrayType | RecordType | SetType | FileType;
+	(ArrayType | RecordType | SetType | FileType);
 
 ArrayType:
-    ARRAYT LBRACKET IndexType (COMMA IndexType)* RBRACKET OFT ElementType;
+	ARRAYT LBRACKET IndexType (COMMA IndexType)* RBRACKET OFT ElementType;
 
 IndexType:
-    SimpleType;
+	SimpleType;
 
 ElementType:
-    Type;
+	Type;
 
-    //falta criar fieldList
 RecordType:
-    RECORDT /*FieldList*/ ENDT;
+	RECORDT FieldList ENDT;
 
 SetType:
-    SETOF BaseType;
+	SETT OFT BaseType;
 
 BaseType:
-    Type;
+	Type;
 
 FileType:
-    FILEOF FileComponentType;
-
-FileComponentType:
-    Type;
+	FILET OFT Type;
 
 PointerType:
-    CARAT TYPEIDENTIFIER;
+	CARAT IDENTIFIER;
 
-/* Record Fields */
 FieldList:
-    ((FixedPart (SEMICOLON VariantPart)? | VariantPart) (SEMICOLON)?)?;
+	((FixedPart (SEMICOLON VariantPart)? | VariantPart) (SEMICOLON)?)?;
 
 FixedPart:
-    RecordSection (SEMICOLON RecordSection)*;
+	RecordSection (SEMICOLON RecordSection)*;
 
 RecordSection:
-    IdentifierList COLON Type;
+	IdentifierList COLON Type;
 
 VariantPart:
-    CASET TagField TYPEIDENTIFIER OFT Variant (SEMICOLON Variant)*;
+	CASET TagField IDENTIFIER OFT Variant (SEMICOLON Variant)*;
 
 TagField:
-    (IDENTIFIER COLON)?;
+	(IDENTIFIER COLON)?;
 
 Variant:
-    CaseLabelList COLON LPAREN FieldList RPAREN;
+	CaseLabelList COLON LPAREN FieldList RPAREN;
 
-/*Input/Output*/
 OutputList:
-    OutputValue (COMMA OutputValue)*;
+	OutputValue (COMMA OutputValue)*;
 
 OutputValue:
-    Expression (SEMICOLON FieldWidth (COLON FractionLength)?)?;
-
-FieldWidth:
-    Expression;
-
-FractionLength:
-    Expression;
-
-/* Variable and Identifier Categories */
-ExpressionList:
-    Expression (COMMA Expression)*;
-
-FileVariable:
-    Variable;
-
-ReferencedVariable:
-    PointerVariable CARAT;
-
-RecordVariable:
-    Variable;
-
-PointerVariable:
-    Variable;
-
-ActualVariable:
-    Variable;
-
-ArrayVariable:
-    Variable;
-
-/* Low Level Definitions */
-VariableList:
-    Variable (COMMA Variable)*;
-
-IdentifierList:
-    IDENTIFIER (COMMA IDENTIFIER)*;
-
-/* Terminais */
-terminal TYPEIDENTIFIER:
-    IDENTIFIER;
-
-terminal FUNCTIONIDENTIFIER:
-    IDENTIFIER;
-
-terminal PROCEDUREIDENTIFIER:
-    IDENTIFIER;
-
-terminal FIELDIDENTIFIER:
-    IDENTIFIER;
-
-terminal VARIABLEIDENTIFIER:
-    IDENTIFIER;
-
-terminal BOUNDIDENTIFIER:
-    IDENTIFIER;
-
-terminal CONSTANTIDENTIFIER:
-    IDENTIFIER;
+	Expression (SEMICOLON Expression (COLON Expression)?)?;
 
 terminal PROGRAMT:
-    'program';
-
-terminal LABELT:
-    'label';
-
-terminal CONSTT:
-    'const';
-
-terminal TYPET:
-    'type';
-
-terminal FUNCTIONT:
-    'function';
-
-terminal VART:
-    'var';
-
-terminal PACKEDT:
-    'packed';
-
-terminal ARRAYT:
-    'array';
-
-terminal OFT:
-    'of';
-
-terminal NOTT:
-    'not';
-
-terminal PROCEDURET:
-    'procedure';
-
-terminal RECORDT:
-    'record';
-
-terminal ENDT:
-    'end';
-
-terminal SETOF:
-    'set of';
-
-terminal FILEOF:
-    'file of';
-
-terminal BEGINT:
-    'begin';
-
-terminal FORWARDT:
-    'forward';
-
-terminal GOTOT:
-    'goto';
-
-terminal ORT:
-    'or';
-
-terminal ANDT:
-    'and';
-
-terminal NILT:
-    'nil';
-
-terminal DIVT:
-    'div';
-
-terminal MODT:
-    'mod';
-
-terminal WHILET:
-    'while';
-
-terminal IFT:
-    'if';
-
-terminal ELSET:
-    'else';
-
-terminal DOT:
-    'do';
-
-terminal REPEATT:
-    'repeat';
-
-terminal UNTILT:
-    'until';
-
-terminal TOT:
-    'to';
-
-terminal DOWNTOT:
-    'downto';
-
-terminal FORT:
-    'for';
-
-terminal THENT:
-    'then';
-
-terminal CASET:
-    'case';
-
-terminal WITHT:
-    'with';
-
-terminal CARAT:
-    '^';
-
-terminal DOUBLEPERIOD:
-    '..';
-
-terminal PERIOD:
-    '.';
-
-terminal COLONEQ:
-    ':=';
-
-terminal EQ:
-    '=';
-
-terminal COLON:
-    ':';
-
-terminal UNDERLINE:
-    '_';
-
-terminal RPAREN:
-    ')';
-
-terminal LPAREN:
-    '(';
-
-terminal LBRACKET:
-    '[';
-
-terminal RBRACKET:
-    ']';
-
-terminal COMMA:
-    ',';
+	'program';
 
 terminal SEMICOLON:
-    ';';
+	';';
 
-/* Levamos em consideração apenas as definicoes usadas quando se compila usando FPC */
-terminal COMPILERDEFINEDDIRECTIVES:
-    'FPC_LINK_DYNAMIC' | 'FPC_LINK_STATIC' | 'FPC_LINK_SMART' | 'FPC_PROFILE' | 'FPC_CROSSCOMPILING' | 'FPC' | 'VER2' |
-    'VER2_0' | 'VER2_2' | 'FPC_VERSION' | 'FPC_RELEASE' | 'FPC_PATCH' | 'FPC_FULLVERSION' | 'ENDIAN_LITTLE' |
-    'ENDIAN_BIG' | 'FPC_DELPHI' | 'FPC_OBJFPC' | 'FPC_TP' | 'FPC_GPC';
+terminal PERIOD:
+	'.';
+
+terminal LPAREN:
+	'(';
+
+terminal RPAREN:
+	')';
+
+terminal COMMA:
+	',';
+
+terminal LABELT:
+	'label';
+
+terminal CONSTT:
+	'const';
+
+terminal EQT:
+	'=';
+
+terminal TYPET:
+	'type';
+
+terminal VART:
+	'var';
+
+terminal COLON:
+	':';
+
+terminal FORWARDT:
+	'forward';
+
+terminal BEGINT:
+	'begin';
+
+terminal ENDT:
+	'end';
+
+terminal PROCEDURET:
+	'procedure';
+
+terminal FUNCTIONT:
+	'function';
+
+terminal ARRAYT:
+	'array';
+
+terminal PACKEDT:
+	'packed';
+
+terminal LBRACKET:
+	'[';
+
+terminal RBRACKET:
+	']';
+
+terminal OFT:
+	'of';
+
+terminal DOUBLEPERIOD:
+	'..';
+
+terminal RECORDT:
+	'record';
+
+terminal SETT:
+	'set';
+
+terminal FILET:
+	'file';
+
+terminal CARAT:
+	'^';
+
+terminal COLONEQ:
+	':=';
+
+terminal GOTOT:
+	'goto';
+
+terminal WHILET:
+	'while';
+
+terminal REPEATT:
+	'repeat';
+
+terminal FORT:
+	'for';
+
+terminal TOT:
+	'to';
+
+terminal DOWNTOT:
+	'downto';
+
+terminal DOT:
+	'do';
+
+terminal IFT:
+	'if';
+
+terminal THENT:
+	'then';
+
+terminal ELSET:
+	'else';
+
+terminal CASET:
+	'case';
+
+terminal WITHT:
+	'with';
+
+terminal UNTILT:
+	'until';
+
+IdentifierList:
+	IDENTIFIER (COMMA IDENTIFIER)*;
 
 terminal IDENTIFIER:
-    LETTER (LETTER | DIGITO)*;
+	LETTER (LETTER | DIGITO)*;
 
-terminal RELATIONOPERATOR:
-    "=" | "<>" | "<" | "<=" | ">" | ">=" | "in";
+ConstantIdentifier:
+	IDENTIFIER;
 
-terminal ADDITIONOPERATOR:
-    "+" | "-" | ORT;
+Number:
+	(IntegerNumber | RealNumber);
 
-terminal MULTIPLICATIONOPERATOR:
-    "*" | "/" | DIVT | MODT | ANDT;
+ScaleFactor:
+	('E' | 'e') DigitSequence;
 
-terminal NUMBER:
-    INTEGERNUMBER | REALNUMBER;
+RealNumber:
+	DigitSequence PERIOD (UNSIGNEDDIGITSEQUENCE)? (ScaleFactor)? | DigitSequence ScaleFactor;
 
-terminal INTEGERNUMBER:
-    DIGITSEQUENCE;
-
-terminal REALNUMBER:
-    DIGITSEQUENCE "." (UNSIGNEDDIGITSEQUENCE)? (SCALEFACTOR)? |
-    DIGITSEQUENCE SCALEFACTOR;
-
-terminal SCALEFACTOR:
-    ('E' | 'e') DIGITSEQUENCE;
+Constant:
+	(SIGN)? (ConstantIdentifier | Number) | STRING;
 
 terminal UNSIGNEDDIGITSEQUENCE:
-    DIGITO (DIGITO)*;
+	DIGITO (DIGITO)*;
 
-terminal DIGITSEQUENCE:
-    (SIGN)? UNSIGNEDDIGITSEQUENCE;
+DigitSequence:
+	(SIGN)? UNSIGNEDDIGITSEQUENCE;
+
+IntegerNumber:
+	DigitSequence;
+
+Label:
+	IntegerNumber;
 
 terminal SIGN:
-    '+' | '-';
+	'+' | '-';
 
-terminal LETTER:
-    ('a'..'z') | ('A'..'Z');
+terminal fragment LETTER:
+	('a'..'z') | ('A'..'Z');
 
-terminal DIGITO:
-    ('0'..'9');
+terminal fragment DIGITO:
+	('0'..'9');
 
-terminal STRING:
-    "'" STRINGCHARACTER (STRINGCHARACTER)* "'";
-
-terminal STRINGCHARACTER:
-    NUMBER | (LETTER)* | "''";
-
-terminal LABEL:
-    INTEGERNUMBER;
-
-terminal CONSTANT:
-    (SIGN)? (CONSTANTIDENTIFIER | NUMBER) | STRING;
+terminal WS:
+	(' ' | '\t' | '\r' | '\n');
+	
